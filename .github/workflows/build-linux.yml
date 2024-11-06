@@ -1,0 +1,42 @@
+name: Build and Release Linux Executable
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v3
+
+      - name: Python einrichten
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build ausführen
+        run: |
+          pyinstaller --onefile main.py
+
+      - name: Artefakt hochladen
+        uses: actions/upload-artifact@v3
+        with:
+          name: minilink-linux
+          path: dist/main
+
+      - name: Release erstellen
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
