@@ -8,7 +8,7 @@ import tempfile
 from tkinter import messagebox
 
 GITHUB_REPO = "xNycrofox/minilink"
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = "0.0.1"
 
 def check_for_update():
     """Überprüft auf Updates und bietet dem Benutzer ein Update an."""
