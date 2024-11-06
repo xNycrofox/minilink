@@ -1,4 +1,4 @@
-name: Build and Release macOS Executable
+name: Build and Release macOS .pkg
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build:
+  build-and-release:
     runs-on: macos-latest
 
     steps:
@@ -28,8 +28,19 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --icon=minilink/assets/icon.icns --name=minilink main.py
 
+      - name: .pkg-Datei erstellen
+        run: |
+          mkdir -p dist/minilink.app/Contents/MacOS
+          cp dist/minilink dist/minilink.app/Contents/MacOS/minilink
+          productbuild --component dist/minilink.app /Applications dist/minilink.pkg
+
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v3
         with:
           name: minilink-macos
-          path: dist/minilink.app  # .app-Bundle hochladen
+          path: dist/minilink.pkg  # .pkg-Datei hochladen
+
+      - name: Release erstellen
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/minilink.pkg
