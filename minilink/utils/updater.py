@@ -6,9 +6,14 @@ import os
 import shutil
 import tempfile
 from tkinter import messagebox
+import re
 
 GITHUB_REPO = "xNycrofox/minilink"
 CURRENT_VERSION = "0.0.1"
+
+def parse_version(version):
+    """Extrahiert die Versionsnummer aus dem tag_name-Format."""
+    return tuple(map(int, re.sub(r'[^0-9.]', '', version).split('.')))
 
 def check_for_update():
     """Überprüft auf Updates und bietet dem Benutzer ein Update an."""
@@ -18,7 +23,7 @@ def check_for_update():
         latest_release = response.json()
         latest_version = latest_release['tag_name']
 
-        if latest_version > CURRENT_VERSION:
+        if parse_version(latest_version) > parse_version(CURRENT_VERSION):
             answer = messagebox.askyesno(
                 "Update verfügbar",
                 f"Version {latest_version} ist verfügbar. Möchtest du das Update installieren?"
@@ -32,6 +37,7 @@ def check_for_update():
                 download_and_replace(download_url, latest_version)
     except Exception as e:
         print(f"Update-Überprüfung fehlgeschlagen: {e}")
+
 
 def download_and_replace(download_url, version):
     """Lädt die neue Version herunter und ersetzt das aktuelle Programm."""

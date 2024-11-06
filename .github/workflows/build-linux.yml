@@ -33,3 +33,8 @@ jobs:
         with:
           name: minilink-linux
           path: dist/minilink  # Datei ohne Erweiterung für Linux
+
+      - name: Release erstellen
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/minilink.sh
