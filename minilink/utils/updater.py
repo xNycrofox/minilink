@@ -32,7 +32,7 @@ def check_for_update():
                 download_url = next(
                     asset['browser_download_url']
                     for asset in latest_release['assets']
-                    if asset['name'].endswith('.exe') or asset['name'].endswith('.app') or asset['name'].endswith('.tar.gz')
+                    if asset['name'].endswith('.exe') or asset['name'].endswith('.pkg') or asset['name'].endswith('.sh')
                 )
                 download_and_replace(download_url, latest_version)
     except Exception as e:
