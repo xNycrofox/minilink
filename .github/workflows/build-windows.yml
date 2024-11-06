@@ -26,7 +26,7 @@ jobs:
 
       - name: Build ausführen
         run: |
-          pyinstaller --onefile --noconsole main.py
+          pyinstaller --onefile --windowed --icon=minilink/assets/icon_minilink.ico main.py
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v3
