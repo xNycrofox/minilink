@@ -27,7 +27,7 @@ class MinilinkApp:
         self.server_manager = None
         self.connections_queue = queue.Queue()
         # Optional: Nach Updates suchen
-        # threading.Thread(target=check_for_update).start()
+        threading.Thread(target=check_for_update).start()
 
     def setup_variables(self):
         self.web_root = self.settings.get("web_root", os.getcwd())

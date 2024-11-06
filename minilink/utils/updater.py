@@ -13,6 +13,7 @@ CURRENT_VERSION = "0.0.1"
 
 def parse_version(version):
     """Extrahiert die Versionsnummer aus dem tag_name-Format."""
+    print(tuple(map(int, re.sub(r'[^0-9.]', '', version).split('.'))))
     return tuple(map(int, re.sub(r'[^0-9.]', '', version).split('.')))
 
 def check_for_update():
