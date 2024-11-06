@@ -26,17 +26,10 @@ jobs:
 
       - name: Build ausführen
         run: |
-          pyinstaller --onefile --windowed --icon=minilink/assets/icon_minilink.icns main.py
+          pyinstaller --onefile --windowed --icon=minilink/assets/icon.icns --name=minilink main.py
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v3
         with:
           name: minilink-macos
-          path: dist/main
-
-      - name: Release erstellen
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: dist/minilink.app  # .app-Bundle hochladen

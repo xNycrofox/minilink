@@ -3,7 +3,7 @@ name: Build and Release Windows Executable
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger bei neuen Tags
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -26,17 +26,10 @@ jobs:
 
       - name: Build ausführen
         run: |
-          pyinstaller --onefile --windowed --icon=minilink/assets/icon_minilink.ico main.py
+          pyinstaller --onefile --windowed --icon=minilink/assets/icon.ico --name=minilink.exe main.py
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v3
         with:
           name: minilink-windows
-          path: dist\main.exe
-
-      - name: Release erstellen
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist\main.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: dist/minilink.exe  # Datei mit .exe-Erweiterung
