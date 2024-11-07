@@ -9,6 +9,8 @@ import os
 import sys
 import subprocess
 import logging
+import time
+import shutil
 
 from minilink.server.http_server import ServerManager
 from minilink.utils.settings import SettingsManager
@@ -17,6 +19,12 @@ from minilink.utils.updater import check_for_update
 
 class MinilinkApp:
     def __init__(self):
+         # Überprüfen, ob die Anwendung mit Update-Parametern gestartet wurde
+        if '--updating' in sys.argv:
+            self.perform_self_update()
+            sys.exit(0)  # Beenden nach dem Update
+
+        # Restlicher Initialisierungscode
         self.root = tk.Tk()
         self.root.title("Minilink")
         self.root.geometry("800x600")
@@ -31,6 +39,73 @@ class MinilinkApp:
         self.progress_window = None
         threading.Thread(target=self.check_for_update_thread).start()
         self.process_update_queue()
+
+    def perform_self_update(self):
+        """Führt das Selbstupdate durch, indem die alte ausführbare Datei ersetzt wird."""
+        try:
+            idx = sys.argv.index('--updating')
+            old_executable = sys.argv[idx + 1]
+
+            # Warten, bis die alte Anwendung beendet ist
+            max_wait = 10  # Sekunden
+            waited = 0
+            while self.is_process_running(old_executable) and waited < max_wait:
+                time.sleep(0.5)
+                waited += 0.5
+
+            if self.is_process_running(old_executable):
+                messagebox.showerror("Update fehlgeschlagen", "Die alte Version läuft noch. Bitte schließen Sie die Anwendung und versuchen Sie es erneut.")
+                return
+
+            # Ersetzen der alten ausführbaren Datei durch die neue
+            try:
+                if sys.platform == 'win32':
+                    os.remove(old_executable)
+                elif sys.platform == 'darwin':
+                    # macOS: Entfernen des alten App-Bundles
+                    shutil.rmtree(old_executable)
+                else:
+                    os.remove(old_executable)
+            except Exception as e:
+                messagebox.showerror("Update fehlgeschlagen", f"Konnte alte Version nicht entfernen: {e}")
+                return
+
+            try:
+                shutil.move(sys.executable, old_executable)
+            except Exception as e:
+                messagebox.showerror("Update fehlgeschlagen", f"Konnte neue Version nicht verschieben: {e}")
+                return
+
+            # Neustarten der aktualisierten Anwendung
+            if sys.platform == 'win32':
+                subprocess.Popen([old_executable], shell=False)
+            elif sys.platform == 'darwin':
+                subprocess.Popen(['open', old_executable])
+            else:
+                subprocess.Popen([old_executable], shell=False)
+
+        except Exception as e:
+            messagebox.showerror("Update fehlgeschlagen", f"Das Update konnte nicht installiert werden: {e}")
+
+    def is_process_running(self, executable_path):
+        """Prüft, ob ein Prozess für den gegebenen ausführbaren Pfad läuft."""
+        if sys.platform == 'win32':
+            import psutil
+            for proc in psutil.process_iter(['exe']):
+                try:
+                    if proc.info['exe'] and os.path.abspath(proc.info['exe']) == os.path.abspath(executable_path):
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            return False
+        else:
+            # Für macOS und Linux
+            import subprocess
+            try:
+                result = subprocess.run(['lsof', executable_path], stdout=subprocess.PIPE)
+                return result.stdout != b''
+            except Exception:
+                return False
 
 
     def check_for_update_thread(self):

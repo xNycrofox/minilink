@@ -46,9 +46,17 @@ def check_for_update(queue, progress_queue):
 
 
 
+# updater.py
+
+import tempfile
+import subprocess
+import time
+import shutil
+import sys
+import os
 
 def download_and_replace(download_url, version, progress_queue):
-    """Lädt die neue Version herunter und ersetzt das aktuelle Programm."""
+    """Lädt die neue Version herunter und startet den Selbstaktualisierungsprozess."""
     try:
         temp_dir = tempfile.mkdtemp()
         if sys.platform == 'win32':
@@ -56,22 +64,22 @@ def download_and_replace(download_url, version, progress_queue):
         elif sys.platform == 'darwin':
             file_ext = '.app'
         else:
-            file_ext = '.sh'  # Oder passendes Format
+            file_ext = ''  # Anpassen für andere Plattformen
 
         temp_file = os.path.join(temp_dir, f"minilink_{version}{file_ext}")
 
+        # Download der neuen Version (wie bisher)
         response = requests.get(download_url, stream=True)
         response.raise_for_status()
         total_length = response.headers.get('content-length')
 
         if total_length is None:
-            # Keine Inhaltslänge angegeben
             with open(temp_file, 'wb') as f:
                 shutil.copyfileobj(response.raw, f)
         else:
             total_length = int(total_length)
             downloaded = 0
-            chunk_size = 8192  # 8KB
+            chunk_size = 8192
             with open(temp_file, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
@@ -80,11 +88,27 @@ def download_and_replace(download_url, version, progress_queue):
                         progress = int(100 * downloaded / total_length)
                         progress_queue.put(progress)
 
-        current_executable = sys.argv[0]
-        shutil.move(temp_file, current_executable)
-        messagebox.showinfo("Update abgeschlossen", "Minilink wurde aktualisiert. Bitte starte die Anwendung neu.")
+        # Pfad zur aktuellen ausführbaren Datei
+        if getattr(sys, 'frozen', False):
+            current_executable = sys.executable
+        else:
+            current_executable = sys.argv[0]
+
+        # Starten der neuen ausführbaren Datei mit Update-Parametern
+        if sys.platform == 'win32':
+            # Windows
+            subprocess.Popen([temp_file, '--updating', current_executable], shell=False)
+        elif sys.platform == 'darwin':
+            # macOS
+            subprocess.Popen(['open', temp_file, '--args', '--updating', current_executable])
+        else:
+            # Linux oder andere
+            subprocess.Popen([temp_file, '--updating', current_executable], shell=False)
+
+        # Beenden der aktuellen Anwendung
         sys.exit(0)
+
     except Exception as e:
         messagebox.showerror("Update fehlgeschlagen", f"Das Update konnte nicht installiert werden: {e}")
     finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        pass  # Wir können temp_dir hier nicht löschen, da die neue ausführbare Datei darin liegt
