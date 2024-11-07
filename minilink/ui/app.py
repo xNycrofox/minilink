@@ -27,10 +27,11 @@ class MinilinkApp:
         self.server_manager = None
         self.connections_queue = queue.Queue()
         self.update_queue = queue.Queue()
-        threading.Thread(target=self.check_for_update_thread).start()
-        self.process_update_queue()
         self.progress_queue = queue.Queue()
         self.progress_window = None
+        threading.Thread(target=self.check_for_update_thread).start()
+        self.process_update_queue()
+
 
     def check_for_update_thread(self):
         check_for_update(self.update_queue, self.progress_queue)
