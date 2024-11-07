@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: minilink-macos
-          path: dist/minilink.pkg  # .pkg-Datei hochladen
+          path: dist/minilink.pkg
 
       - name: Release erstellen
         uses: softprops/action-gh-release@v1

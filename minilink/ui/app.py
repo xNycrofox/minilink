@@ -18,7 +18,7 @@ from minilink.utils.updater import check_for_update
 class MinilinkApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Minilink - Einfacher Webserver")
+        self.root.title("Minilink")
         self.root.geometry("800x600")
         self.settings = SettingsManager()
         self.logger = Logger()
@@ -26,8 +26,48 @@ class MinilinkApp:
         self.create_ui()
         self.server_manager = None
         self.connections_queue = queue.Queue()
-        # Optional: Nach Updates suchen
-        threading.Thread(target=check_for_update).start()
+        self.update_queue = queue.Queue()
+        threading.Thread(target=self.check_for_update_thread).start()
+        self.process_update_queue()
+        self.progress_queue = queue.Queue()
+        self.progress_window = None
+
+    def check_for_update_thread(self):
+        check_for_update(self.update_queue, self.progress_queue)
+
+
+    def process_update_queue(self):
+        try:
+            while True:
+                message = self.update_queue.get_nowait()
+                self.status_label.config(text=f"© 2024 Elias Müller | {message}")
+        except queue.Empty:
+            pass
+        self.root.after(100, self.process_update_queue)
+
+    def show_progress_window(self):
+        """Erstellt ein neues Fenster mit einem Fortschrittsbalken."""
+        self.progress_window = tk.Toplevel(self.root)
+        self.progress_window.title("Update wird heruntergeladen...")
+        self.progress_window.geometry("300x100")
+        self.progress_label = tk.Label(self.progress_window, text="Download Fortschritt")
+        self.progress_label.pack(pady=10)
+        self.progress_bar = ttk.Progressbar(self.progress_window, orient='horizontal', length=250, mode='determinate')
+        self.progress_bar.pack(pady=10)
+        self.update_progress_bar()
+
+    def update_progress_bar(self):
+        try:
+            while True:
+                progress = self.progress_queue.get_nowait()
+                self.progress_bar['value'] = progress
+                self.progress_window.update_idletasks()
+                if progress >= 100:
+                    self.progress_window.destroy()
+                    break
+        except queue.Empty:
+            pass
+        self.root.after(100, self.update_progress_bar)
 
     def setup_variables(self):
         self.web_root = self.settings.get("web_root", os.getcwd())
@@ -66,9 +106,10 @@ class MinilinkApp:
 
         # Statusleiste oder Copyright
         self.status_label = tk.Label(
-            self.root, text="© Elias Müller", fg="gray", font=("Arial", 10)
+            self.root, text="© 2024 Elias Müller | Prüfe auf Updates...", fg="gray", font=("Arial", 10)
         )
         self.status_label.pack(side="bottom", pady=5)
+
 
     def create_dashboard_ui(self):
         """Erstelle die Dashboard-UI-Komponenten."""
